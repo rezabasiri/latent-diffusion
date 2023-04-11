@@ -111,9 +111,12 @@ model = UNet2DModel(
         "UpBlock2D",
     ),
 )
-
-noise_scheduler = DDPMScheduler.from_pretrained(os.path.join(config.output_dir, config.saved_model,"scheduler"))
-model = UNet2DModel.from_pretrained(os.path.join(config.output_dir, config.saved_model,"unet"))
+if os.path.isfile(os.path.join(config.output_dir, config.saved_model,"scheduler")):
+    print("check")
+    noise_scheduler = DDPMScheduler.from_pretrained(os.path.join(config.output_dir, config.saved_model,"scheduler"))
+    model = UNet2DModel.from_pretrained(os.path.join(config.output_dir, config.saved_model,"unet"))
+else:
+    noise_scheduler = DDPMScheduler(num_train_timesteps=1000)
 
 sample_image = dataset[0]["images"].unsqueeze(0)
 print("Input shape:", sample_image.shape)
