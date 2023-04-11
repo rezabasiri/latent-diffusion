@@ -17,12 +17,12 @@ from huggingface_hub import HfFolder, Repository, whoami
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "test"
-name_tag = "test"
+run_version = "256"
+name_tag = "woundonly"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
-pathimg = '/home/rbasiri/Dataset/GAN/train'
+pathimg = '/home/rbasiri/Dataset/GAN/train_woundonly'
 folder = '/home/rbasiri/Dataset/saved_models/Diffusion/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
 ########################
 ## Mehdy
@@ -37,17 +37,17 @@ shutil.copy(realpath, "./")
 #####################################################################
 @dataclass
 class TrainingConfig:
-    image_size = 128  # the generated image resolution
-    train_batch_size = 16
-    eval_batch_size = 16 # how many images to sample during evaluation
-    sample_batch_size = 4 #to monitor the progress
-    num_epochs = 500
+    image_size = 256  # the generated image resolution
+    train_batch_size = 32
+    eval_batch_size = 32 # how many images to sample during evaluation
+    sample_batch_size = 16 #to monitor the progress
+    num_epochs = 900
     gradient_accumulation_steps = 1
     learning_rate = 1e-4
     lr_warmup_steps = 500
-    save_image_epochs = 10
+    save_image_epochs = 30
     save_model_epochs = 30
-    mixed_precision = "fp16"  # `no` for float32, `fp16` for automatic mixed precision
+    mixed_precision = "no"  # `no` for float32, `fp16` for automatic mixed precision
     output_dir = "./"  # the model name locally and on the HF Hub
     cache_dir = "cache"
     saved_model = "saved_model"
@@ -159,7 +159,7 @@ def evaluate(config, epoch, pipeline):
     test_dir = os.path.join(config.output_dir, "samples")
     os.makedirs(test_dir, exist_ok=True)
     image_grid.save(f"{test_dir}/{epoch:04d}.png")
-    
+
 def get_full_repo_name(model_id: str, organization: str = None, token: str = None):
     if token is None:
         token = HfFolder.get_token()
@@ -168,7 +168,6 @@ def get_full_repo_name(model_id: str, organization: str = None, token: str = Non
         return f"{username}/{model_id}"
     else:
         return f"{organization}/{model_id}"
-
 # model = DDPMPipeline.from_pretrained(os.path.join(config.output_dir, config.saved_model)).to("cuda")
 
 def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler):
@@ -247,4 +246,26 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                     pipeline.save_pretrained(os.path.join(config.output_dir, config.saved_model))
 
 args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+
+# import torch.multiprocessing as mp
+# torch.multiprocessing.spawn(train_loop, args=(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler,), nprocs=2, join=True, daemon=False, start_method='spawn')
+# cxx = mp.get_context("spawn")
+# if __name__ == '__main__':
+#     # mp.set_start_method('spawn')
+#     args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+#     notebook_launcher(train_loop, args, num_processes=2)
+# if __name__ == '__main__':
+#     num_processes = 2
+#     cxx = mp.get_context("spawn")
+#     # model.share_memory()
+#     # NOTE: this is required for the ``fork`` method to work
+
+#     processes = []
+#     for rank in range(num_processes):
+#         p = cxx.Process(target=train_loop, args=(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler,))
+#         p.start()
+#         processes.append(p)
+#     for p in processes:
+#         p.join()
+        
 notebook_launcher(train_loop, args, num_processes=1)
