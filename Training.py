@@ -153,7 +153,7 @@ def evaluate(config, epoch, pipeline):
     ).images
 
     # Make a grid out of the images
-    image_grid = make_grid(images, rows=2, cols=2)
+    image_grid = make_grid(images, rows=4, cols=4)
 
     # Save the images
     test_dir = os.path.join(config.output_dir, "samples")
