@@ -226,10 +226,12 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                 lr_scheduler.step()
                 optimizer.zero_grad()
 
-            progress_bar.update(30)
+            # if global_step % 50 == 0 or len(train_dataloader) == global_step: 
             logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0], "step": global_step}
-            progress_bar.set_postfix(**logs)
             accelerator.log(logs, step=global_step)
+            if len(train_dataloader) == global_step: 
+                progress_bar.update(global_step)
+                progress_bar.set_postfix(**logs)
             global_step += 1
 
         # After each epoch you optionally sample some demo images with evaluate() and save the model
