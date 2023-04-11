@@ -21,9 +21,13 @@ run_version = "test"
 name_tag = "test"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
+## Calgary
+pathimg = '/home/rbasiri/Dataset/GAN/train'
+folder = '/home/rbasiri/Dataset/saved_models/Diffusion/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
+########################
 ## Mehdy
-pathimg = '/home/graduate1/segmentation/Dataset/GAN/train_orig'
-folder = '/home/graduate1/segmentation/saved_models/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
+# pathimg = '/home/graduate1/segmentation/Dataset/GAN/train_orig'
+# folder = '/home/graduate1/segmentation/saved_models/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
 ########################
 print('Model Saved in:', folder)
 # os.umask(0)
