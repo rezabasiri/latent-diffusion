@@ -112,7 +112,7 @@ model = UNet2DModel(
     ),
 )
 if os.path.isfile(os.path.join(config.output_dir, config.saved_model,"scheduler")):
-    print("check")
+    print("Loading from Saved Model")
     noise_scheduler = DDPMScheduler.from_pretrained(os.path.join(config.output_dir, config.saved_model,"scheduler"))
     model = UNet2DModel.from_pretrained(os.path.join(config.output_dir, config.saved_model,"unet"))
 else:
