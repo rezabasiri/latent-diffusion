@@ -1,4 +1,4 @@
-name: ldm
+name: diff_torch
 channels:
   - pytorch
   - defaults
