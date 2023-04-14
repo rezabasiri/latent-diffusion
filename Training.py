@@ -18,11 +18,11 @@ from huggingface_hub import HfFolder, Repository, whoami
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
 run_version = "256"
-name_tag = "woundonly"
+name_tag = "foot"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
-pathimg = '/home/rbasiri/Dataset/GAN/train_woundonly'
+pathimg = '/home/rbasiri/Dataset/GAN/train_foot'
 folder = '/home/rbasiri/Dataset/saved_models/Diffusion/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
 ########################
 ## Mehdy
@@ -112,7 +112,7 @@ model = UNet2DModel(
     ),
 )
 if os.path.isfile(os.path.join(config.output_dir, config.saved_model,"scheduler")):
-    print("Loading from Saved Model")
+    print("Loading from the Saved Model")
     noise_scheduler = DDPMScheduler.from_pretrained(os.path.join(config.output_dir, config.saved_model,"scheduler"))
     model = UNet2DModel.from_pretrained(os.path.join(config.output_dir, config.saved_model,"unet"))
 else:
