@@ -17,7 +17,7 @@ from huggingface_hub import HfFolder, Repository, whoami
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "256_VAEKL"
+run_version = "256_Augm"
 name_tag = "foot"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
