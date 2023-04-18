@@ -8,7 +8,7 @@ from torchvision import transforms
 import torch.nn.functional as F
 from tqdm.auto import tqdm
 from pathlib import Path
-from diffusers import UNet2DModel, DDPMScheduler, DDPMPipeline
+from diffusers import UNet2DModel, DDPMScheduler, DDPMPipeline, AutoencoderKL, VQModel
 from datasets import load_dataset
 from diffusers.optimization import get_cosine_schedule_with_warmup
 from accelerate import Accelerator, notebook_launcher
@@ -17,7 +17,7 @@ from huggingface_hub import HfFolder, Repository, whoami
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "256"
+run_version = "256_VAEKL"
 name_tag = "foot"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
