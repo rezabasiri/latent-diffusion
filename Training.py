@@ -75,7 +75,10 @@ fig.show()
 preprocess = transforms.Compose(
     [
         transforms.Resize((config.image_size, config.image_size)),
-        transforms.RandomHorizontalFlip(),
+        transforms.RandomHorizontalFlip(p=0.3),
+        transforms.RandomGrayscale(p=0.1)
+        transforms.RandomApply(torch.nn.ModuleList([transforms.ColorJitter(brightness=(1, 3), contrast=(1, 3), saturation=(1, 2), hue=0),]), p=0.2)
+        # transforms.RandomApply(torch.nn.ModuleList([transforms.ColorJitter(),]), p=0.3)
         transforms.ToTensor(),
         transforms.Normalize([0.5], [0.5]),
     ]
