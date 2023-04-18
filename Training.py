@@ -88,7 +88,13 @@ def transform(examples):
 dataset.set_transform(transform)
 train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True)
 
-model = UNet2DModel(
+
+if os.path.isdir(os.path.join(config.output_dir, config.saved_model,"scheduler")):
+    print("Loading from the Saved Model")
+    noise_scheduler = DDPMScheduler.from_pretrained(os.path.join(config.output_dir, config.saved_model,"scheduler"))
+    model = UNet2DModel.from_pretrained(os.path.join(config.output_dir, config.saved_model,"unet"))
+else:
+    model = UNet2DModel(
     sample_size=config.image_size,  # the target image resolution
     in_channels=3,  # the number of input channels, 3 for RGB images
     out_channels=3,  # the number of output channels
@@ -101,7 +107,7 @@ model = UNet2DModel(
         "DownBlock2D",
         "AttnDownBlock2D",  # a ResNet downsampling block with spatial self-attention
         "DownBlock2D",
-    ),
+        ),
     up_block_types=(
         "UpBlock2D",  # a regular ResNet upsampling block
         "AttnUpBlock2D",  # a ResNet upsampling block with spatial self-attention
@@ -109,14 +115,10 @@ model = UNet2DModel(
         "UpBlock2D",
         "UpBlock2D",
         "UpBlock2D",
-    ),
-)
-if os.path.isfile(os.path.join(config.output_dir, config.saved_model,"scheduler")):
-    print("Loading from the Saved Model")
-    noise_scheduler = DDPMScheduler.from_pretrained(os.path.join(config.output_dir, config.saved_model,"scheduler"))
-    model = UNet2DModel.from_pretrained(os.path.join(config.output_dir, config.saved_model,"unet"))
-else:
+        ),
+    )
     noise_scheduler = DDPMScheduler(num_train_timesteps=1000)
+    print("Running model from scratch")
 
 sample_image = dataset[0]["images"].unsqueeze(0)
 print("Input shape:", sample_image.shape)
