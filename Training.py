@@ -18,7 +18,7 @@ from huggingface_hub import HfFolder, Repository, whoami
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
 run_version = "256256"
-name_tag = "layer5_Dstep5000_footbkrm"
+name_tag = "layer6_Dstep1000_footbkrm"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
@@ -39,12 +39,13 @@ shutil.copy(realpath, "./")
 class TrainingConfig:
     image_size1 = 256  #the generated image resolution
     image_size2 = 256  #the generated image resolution
-    train_batch_size = 3
-    eval_batch_size = 3 #how many images to sample during evaluation
+    train_batch_size = 7
+    eval_batch_size = 7 #how many images to sample during evaluation
     sample_batch_size = 8 #to monitor the progress
     num_epochs = 1000
+    num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
     gradient_accumulation_steps = 1
-    learning_rate = 1e-12
+    learning_rate = 1e-6
     lr_warmup_steps = 500
     save_image_epochs = 100
     save_model_epochs = 50
@@ -103,7 +104,7 @@ else:
     # sample_size=config.image_size,  # the target image resolution
     in_channels=3,  # the number of input channels, 3 for RGB images
     out_channels=3,  # the number of output channels
-    layers_per_block=5,  # how many ResNet layers to use per UNet block
+    layers_per_block=6,  # how many ResNet layers to use per UNet block
     block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channels for each UNet block
     down_block_types=(
         "DownBlock2D",  # a regular ResNet downsampling block
@@ -122,7 +123,7 @@ else:
         "UpBlock2D",
         ),
     )
-    noise_scheduler = DDPMScheduler(num_train_timesteps=5000)
+    noise_scheduler = DDPMScheduler(config.num_train_timesteps) 
     print("Running model from scratch")
 # print(model)
 

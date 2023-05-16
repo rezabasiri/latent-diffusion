@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH -p gpu-a100
-#SBATCH --job-name=LDM
+#SBATCH --job-name=LDM256
 #SBATCH --nodes=1
 #SBATCH --ntasks=2
 #SBATCH --cpus-per-task=12
