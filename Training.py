@@ -17,13 +17,13 @@ from huggingface_hub import HfFolder, Repository, whoami
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "640480"
-name_tag = "foot"
+run_version = "256256"
+name_tag = "layer5_Dstep5000_footbkrm"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
 pathimg = '/home/rbasiri/Dataset/GAN/train_foot_bckrm'
-folder = '/home/rbasiri/Dataset/saved_models/Diffusion/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
+folder = '/home/rbasiri/Dataset/saved_models/Diffusion/latent/Model_{}_{}'.format(run_version, name_tag)
 ########################
 ## Mehdy
 # pathimg = '/home/graduate1/segmentation/Dataset/GAN/train_orig'
@@ -37,13 +37,14 @@ shutil.copy(realpath, "./")
 #####################################################################
 @dataclass
 class TrainingConfig:
-    image_size = 256  # the generated image resolution
-    train_batch_size = 12
-    eval_batch_size = 12 # how many images to sample during evaluation
-    sample_batch_size = 16 #to monitor the progress
+    image_size1 = 256  #the generated image resolution
+    image_size2 = 256  #the generated image resolution
+    train_batch_size = 3
+    eval_batch_size = 3 #how many images to sample during evaluation
+    sample_batch_size = 8 #to monitor the progress
     num_epochs = 1000
     gradient_accumulation_steps = 1
-    learning_rate = 1e-8
+    learning_rate = 1e-12
     lr_warmup_steps = 500
     save_image_epochs = 100
     save_model_epochs = 50
@@ -74,7 +75,7 @@ dataset = load_dataset(pathimg, cache_dir=config.cache_dir, split="train")
 
 preprocess = transforms.Compose(
     [
-        transforms.Resize((640, 480)),
+        transforms.Resize((config.image_size1, config.image_size2)),
         # transforms.Resize((config.image_size, config.image_size)),
         transforms.RandomHorizontalFlip(p=0.4),
         #transforms.RandomGrayscale(p=0.1)
@@ -98,11 +99,11 @@ if os.path.isdir(os.path.join(config.output_dir, config.saved_model,"scheduler")
     model = UNet2DModel.from_pretrained(os.path.join(config.output_dir, config.saved_model,"unet"))
 else:
     model = UNet2DModel(
-    sample_size=(640, 480),  # the target image resolution
+    sample_size=(config.image_size1, config.image_size2),  # the target image resolution
     # sample_size=config.image_size,  # the target image resolution
     in_channels=3,  # the number of input channels, 3 for RGB images
     out_channels=3,  # the number of output channels
-    layers_per_block=8,  # how many ResNet layers to use per UNet block
+    layers_per_block=5,  # how many ResNet layers to use per UNet block
     block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channels for each UNet block
     down_block_types=(
         "DownBlock2D",  # a regular ResNet downsampling block
@@ -123,7 +124,7 @@ else:
     )
     noise_scheduler = DDPMScheduler(num_train_timesteps=5000)
     print("Running model from scratch")
-print(model)
+# print(model)
 
 sample_image = dataset[0]["images"].unsqueeze(0)
 print("Input shape:", sample_image.shape)
@@ -160,7 +161,7 @@ def evaluate(config, epoch, pipeline):
     ).images
 
     # Make a grid out of the images
-    image_grid = make_grid(images, rows=4, cols=4)
+    image_grid = make_grid(images, rows=4, cols=2)
 
     # Save the images
     test_dir = os.path.join(config.output_dir, "samples")
@@ -201,11 +202,13 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
     )
 
     global_step = 0
+    progress_bar = tqdm(total=config.num_epochs, disable=not accelerator.is_local_main_process)
 
     # Now you train the model
     for epoch in range(config.num_epochs):
-        progress_bar = tqdm(total=len(train_dataloader), disable=not accelerator.is_local_main_process)
-        progress_bar.set_description(f"Epoch {epoch}")
+        # progress_bar = tqdm(total=len(train_dataloader), disable=not accelerator.is_local_main_process)
+        # progress_bar = tqdm(total=config.num_epochs, disable=not accelerator.is_local_main_process)
+        # progress_bar.set_description(f"Epoch {epoch}")
 
         for step, batch in enumerate(train_dataloader):
             clean_images = batch["images"]
@@ -234,11 +237,11 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                 optimizer.zero_grad()
 
             # if global_step % 50 == 0 or len(train_dataloader) == global_step: 
-            logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0], "step": global_step}
-            accelerator.log(logs, step=global_step)
-            if len(train_dataloader) == global_step: 
-                progress_bar.update(global_step)
-                progress_bar.set_postfix(**logs)
+            # if len(train_dataloader) == global_step: 
+                logs2 = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0], "step": global_step}
+                accelerator.log(logs2, step=global_step) 
+            #     progress_bar.update(global_step)
+            #     progress_bar.set_postfix(**logs)
             global_step += 1
 
         # After each epoch you optionally sample some demo images with evaluate() and save the model
@@ -253,6 +256,10 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                     repo.push_to_hub(commit_message=f"Epoch {epoch}", blocking=True)
                 else:
                     pipeline.save_pretrained(os.path.join(config.output_dir, config.saved_model))
+
+        logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
+        progress_bar.update(epoch)
+        progress_bar.set_postfix(**logs)
 
 args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
 
@@ -277,4 +284,4 @@ args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_schedule
 #     for p in processes:
 #         p.join()
         
-notebook_launcher(train_loop, args, num_processes=2)
+notebook_launcher(train_loop, args, num_processes=1)
