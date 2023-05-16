@@ -76,9 +76,9 @@ preprocess = transforms.Compose(
     [
         transforms.Resize((640, 480)),
         # transforms.Resize((config.image_size, config.image_size)),
-        transforms.RandomHorizontalFlip(p=0.3),
-        transforms.RandomGrayscale(p=0.1)
-        transforms.RandomApply(torch.nn.ModuleList([transforms.ColorJitter(brightness=(1, 3), contrast=(1, 3), saturation=(1, 2), hue=0),]), p=0.2)
+        transforms.RandomHorizontalFlip(p=0.4),
+        #transforms.RandomGrayscale(p=0.1)
+        #transforms.RandomApply(torch.nn.ModuleList([transforms.ColorJitter(brightness=(1, 3), contrast=(1, 3), saturation=(1, 2), hue=0),]), p=0.2)
         # transforms.RandomApply(torch.nn.ModuleList([transforms.ColorJitter(),]), p=0.3)
         transforms.ToTensor(),
         transforms.Normalize([0.5], [0.5]),
@@ -102,7 +102,7 @@ else:
     # sample_size=config.image_size,  # the target image resolution
     in_channels=3,  # the number of input channels, 3 for RGB images
     out_channels=3,  # the number of output channels
-    layers_per_block=10,  # how many ResNet layers to use per UNet block
+    layers_per_block=8,  # how many ResNet layers to use per UNet block
     block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channels for each UNet block
     down_block_types=(
         "DownBlock2D",  # a regular ResNet downsampling block
