@@ -17,12 +17,12 @@ from huggingface_hub import HfFolder, Repository, whoami
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "256"
+run_version = "640480"
 name_tag = "foot"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
-pathimg = '/home/rbasiri/Dataset/GAN/train_foot'
+pathimg = '/home/rbasiri/Dataset/GAN/train_foot_bckrm'
 folder = '/home/rbasiri/Dataset/saved_models/Diffusion/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
 ########################
 ## Mehdy
@@ -38,15 +38,15 @@ shutil.copy(realpath, "./")
 @dataclass
 class TrainingConfig:
     image_size = 256  # the generated image resolution
-    train_batch_size = 32
-    eval_batch_size = 32 # how many images to sample during evaluation
+    train_batch_size = 12
+    eval_batch_size = 12 # how many images to sample during evaluation
     sample_batch_size = 16 #to monitor the progress
-    num_epochs = 900
+    num_epochs = 1000
     gradient_accumulation_steps = 1
-    learning_rate = 1e-4
+    learning_rate = 1e-8
     lr_warmup_steps = 500
-    save_image_epochs = 30
-    save_model_epochs = 30
+    save_image_epochs = 100
+    save_model_epochs = 50
     mixed_precision = "no"  # `no` for float32, `fp16` for automatic mixed precision
     output_dir = "./"  # the model name locally and on the HF Hub
     cache_dir = "cache"
@@ -65,16 +65,17 @@ os.makedirs(test_dir, exist_ok=True)
 
 dataset = load_dataset(pathimg, cache_dir=config.cache_dir, split="train")
 
-import matplotlib.pyplot as plt
-fig, axs = plt.subplots(1, 4, figsize=(16, 4))
-for i, image in enumerate(dataset[:4]["image"]):
-    axs[i].imshow(image)
-    axs[i].set_axis_off()
-fig.show()
+# import matplotlib.pyplot as plt
+# fig, axs = plt.subplots(1, 4, figsize=(16, 4))
+# for i, image in enumerate(dataset[:4]["image"]):
+#     axs[i].imshow(image)
+#     axs[i].set_axis_off()
+# fig.show()
 
 preprocess = transforms.Compose(
     [
-        transforms.Resize((config.image_size, config.image_size)),
+        transforms.Resize((640, 480)),
+        # transforms.Resize((config.image_size, config.image_size)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize([0.5], [0.5]),
@@ -88,17 +89,17 @@ def transform(examples):
 dataset.set_transform(transform)
 train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True)
 
-
 if os.path.isdir(os.path.join(config.output_dir, config.saved_model,"scheduler")):
     print("Loading from the Saved Model")
     noise_scheduler = DDPMScheduler.from_pretrained(os.path.join(config.output_dir, config.saved_model,"scheduler"))
     model = UNet2DModel.from_pretrained(os.path.join(config.output_dir, config.saved_model,"unet"))
 else:
     model = UNet2DModel(
-    sample_size=config.image_size,  # the target image resolution
+    sample_size=(640, 480),  # the target image resolution
+    # sample_size=config.image_size,  # the target image resolution
     in_channels=3,  # the number of input channels, 3 for RGB images
     out_channels=3,  # the number of output channels
-    layers_per_block=2,  # how many ResNet layers to use per UNet block
+    layers_per_block=10,  # how many ResNet layers to use per UNet block
     block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channels for each UNet block
     down_block_types=(
         "DownBlock2D",  # a regular ResNet downsampling block
@@ -117,8 +118,9 @@ else:
         "UpBlock2D",
         ),
     )
-    noise_scheduler = DDPMScheduler(num_train_timesteps=1000)
+    noise_scheduler = DDPMScheduler(num_train_timesteps=5000)
     print("Running model from scratch")
+print(model)
 
 sample_image = dataset[0]["images"].unsqueeze(0)
 print("Input shape:", sample_image.shape)
@@ -272,4 +274,4 @@ args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_schedule
 #     for p in processes:
 #         p.join()
         
-notebook_launcher(train_loop, args, num_processes=1)
+notebook_launcher(train_loop, args, num_processes=2)
