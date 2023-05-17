@@ -12,7 +12,8 @@
 
 # DATA_DIR="/home/rbasiri/Dataset/GAN/train_foot/train/"
 
-# GPUS=2
+NUM_NODES=1
+GPUS=2
 # DEPTH=24
 # DSteps=2000
 # IMG_SIZE=128
@@ -30,4 +31,4 @@
 # mkdir -p $OPENAI_LOGDIR
 # OPENAI_LOGDIR=$OPENAI_LOGDIR \
 #     
-torchrun --nproc_per_node=1 --master_port=23456 /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
+torchrun --nproc_per_node=$GPUS --master_port=23456 --nnodes=$NUM_NODES /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
