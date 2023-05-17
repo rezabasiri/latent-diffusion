@@ -17,13 +17,13 @@ from huggingface_hub import HfFolder, Repository, whoami
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "256256"
-name_tag = "layer6_Dstep1000_footbkrm"
+run_version = "256"
+name_tag = "foot"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
-pathimg = '/home/rbasiri/Dataset/GAN/train_foot_bckrm'
-folder = '/home/rbasiri/Dataset/saved_models/Diffusion/latent/Model_{}_{}'.format(run_version, name_tag)
+pathimg = '/home/rbasiri/Dataset/GAN/train_foot'
+folder = '/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
 ########################
 ## Mehdy
 # pathimg = '/home/graduate1/segmentation/Dataset/GAN/train_orig'
@@ -39,15 +39,16 @@ shutil.copy(realpath, "./")
 class TrainingConfig:
     image_size1 = 256  #the generated image resolution
     image_size2 = 256  #the generated image resolution
-    train_batch_size = 7
-    eval_batch_size = 7 #how many images to sample during evaluation
+    train_batch_size = 32
+    eval_batch_size = 32 #how many images to sample during evaluation
     sample_batch_size = 8 #to monitor the progress
-    num_epochs = 1000
+    layers_per_block=2
+    num_epochs =1000
     num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
-    gradient_accumulation_steps = 1
-    learning_rate = 1e-6
+    gradient_accumulation_steps =1
+    learning_rate = 1e-7
     lr_warmup_steps = 500
-    save_image_epochs = 100
+    save_image_epochs = 50
     save_model_epochs = 50
     mixed_precision = "no"  # `no` for float32, `fp16` for automatic mixed precision
     output_dir = "./"  # the model name locally and on the HF Hub
@@ -104,7 +105,7 @@ else:
     # sample_size=config.image_size,  # the target image resolution
     in_channels=3,  # the number of input channels, 3 for RGB images
     out_channels=3,  # the number of output channels
-    layers_per_block=6,  # how many ResNet layers to use per UNet block
+    layers_per_block=config.layers_per_block,  # how many ResNet layers to use per UNet block
     block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channels for each UNet block
     down_block_types=(
         "DownBlock2D",  # a regular ResNet downsampling block
@@ -203,7 +204,7 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
     )
 
     global_step = 0
-    progress_bar = tqdm(total=config.num_epochs, disable=not accelerator.is_local_main_process)
+    # progress_bar = tqdm(total=config.num_epochs, disable=not accelerator.is_local_main_process)
 
     # Now you train the model
     for epoch in range(config.num_epochs):
@@ -259,8 +260,9 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                     pipeline.save_pretrained(os.path.join(config.output_dir, config.saved_model))
 
         logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
-        progress_bar.update(epoch)
-        progress_bar.set_postfix(**logs)
+        print(logs)
+        # progress_bar.update(epoch)
+        # progress_bar.set_postfix(**logs)
 
 args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
 
