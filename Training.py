@@ -1,3 +1,6 @@
+import timeit
+starttime = timeit.default_timer()
+
 from dataclasses import dataclass
 import torch
 import math
@@ -17,13 +20,14 @@ from huggingface_hub import HfFolder, Repository, whoami
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "256"
-name_tag = "foot"
+run_version = "woundonly_on256footpretrained"
+name_tag = "multiGPU_multinode"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
-pathimg = '/home/rbasiri/Dataset/GAN/train_foot'
+pathimg = '/home/rbasiri/Dataset/GAN/train_woundonly'
 folder = '/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
+pathPreTrained="/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_256_foot"
 ########################
 ## Mehdy
 # pathimg = '/home/graduate1/segmentation/Dataset/GAN/train_orig'
@@ -39,17 +43,17 @@ shutil.copy(realpath, "./")
 class TrainingConfig:
     image_size1 = 256  #the generated image resolution
     image_size2 = 256  #the generated image resolution
-    train_batch_size = 32
-    eval_batch_size = 32 #how many images to sample during evaluation
-    sample_batch_size = 8 #to monitor the progress
+    train_batch_size = 5
+    eval_batch_size = 5 #how many images to sample during evaluation
+    sample_batch_size = 16 #to monitor the progress
     layers_per_block=2
-    num_epochs =1000
+    num_epochs =900
     num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
     gradient_accumulation_steps =1
-    learning_rate = 1e-7
+    learning_rate = 1e-4
     lr_warmup_steps = 500
-    save_image_epochs = 50
-    save_model_epochs = 50
+    save_image_epochs = 100
+    save_model_epochs = 100
     mixed_precision = "no"  # `no` for float32, `fp16` for automatic mixed precision
     output_dir = "./"  # the model name locally and on the HF Hub
     cache_dir = "cache"
@@ -95,8 +99,13 @@ def transform(examples):
 dataset.set_transform(transform)
 train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True)
 
-if os.path.isdir(os.path.join(config.output_dir, config.saved_model,"scheduler")):
-    print("Loading from the Saved Model")
+if os.path.isdir(os.path.join(pathPreTrained, config.saved_model,"scheduler")):
+    print("Loading from a different Saved Model (Transfer)")
+    noise_scheduler = DDPMScheduler.from_pretrained(os.path.join(pathPreTrained, config.saved_model,"scheduler"))
+    model = UNet2DModel.from_pretrained(os.path.join(pathPreTrained, config.saved_model,"unet"))
+    
+elif os.path.isdir(os.path.join(config.output_dir, config.saved_model,"scheduler")):
+    print("Loading from Same Saved Model (cont.)")
     noise_scheduler = DDPMScheduler.from_pretrained(os.path.join(config.output_dir, config.saved_model,"scheduler"))
     model = UNet2DModel.from_pretrained(os.path.join(config.output_dir, config.saved_model,"unet"))
 else:
@@ -163,7 +172,7 @@ def evaluate(config, epoch, pipeline):
     ).images
 
     # Make a grid out of the images
-    image_grid = make_grid(images, rows=4, cols=2)
+    image_grid = make_grid(images, rows=4, cols=4)
 
     # Save the images
     test_dir = os.path.join(config.output_dir, "samples")
@@ -234,9 +243,10 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                 accelerator.backward(loss)
 
                 accelerator.clip_grad_norm_(model.parameters(), 1.0)
-                optimizer.step()
-                lr_scheduler.step()
-                optimizer.zero_grad()
+                if step % config.gradient_accumulation_steps == 0:
+                    optimizer.step()
+                    lr_scheduler.step()
+                    optimizer.zero_grad()
 
             # if global_step % 50 == 0 or len(train_dataloader) == global_step: 
             # if len(train_dataloader) == global_step: 
@@ -260,11 +270,14 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                     pipeline.save_pretrained(os.path.join(config.output_dir, config.saved_model))
 
         logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
-        print(logs)
+        print("Epoch:", epoch)
+        for label, value in logs.items():
+            print(f'{label} {value:.4e}', end=' ')
         # progress_bar.update(epoch)
         # progress_bar.set_postfix(**logs)
 
-args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+def main():
+    # args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
 
 # import torch.multiprocessing as mp
 # torch.multiprocessing.spawn(train_loop, args=(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler,), nprocs=2, join=True, daemon=False, start_method='spawn')
@@ -287,4 +300,9 @@ args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_schedule
 #     for p in processes:
 #         p.join()
         
-notebook_launcher(train_loop, args, num_processes=1)
+# notebook_launcher(train_loop, args, num_processes=2)
+    train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+if __name__ == "__main__":
+    main()
+    
+print("Time Duration", f'{timeit.default_timer()-starttime:.5f}')

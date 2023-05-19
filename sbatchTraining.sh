@@ -1,19 +1,19 @@
 #!/bin/sh
-#SBATCH -p gpu-a100
-#SBATCH --job-name=SD256_2layer
-#SBATCH --nodes=1
+#SBATCH -p gpu-v100
+#SBATCH --job-name=LD_Transfer
+#SBATCH --nodes=3
 #SBATCH --ntasks=2
 #SBATCH --cpus-per-task=12
 #SBATCH -t 1-00:00:00
-#SBATCH --mem=256G
-#SBATCH --gres=gpu:1
+#SBATCH --mem=128G
+#SBATCH --gres=gpu:2
 ## #SBATCH --gres=gpu:p100:3
 #SBATCH -o %x-%j.out
 
 # DATA_DIR="/home/rbasiri/Dataset/GAN/train_foot/train/"
 
 NUM_NODES=1
-GPUS=2
+GPUS=1
 # DEPTH=24
 # DSteps=2000
 # IMG_SIZE=128
@@ -31,4 +31,5 @@ GPUS=2
 # mkdir -p $OPENAI_LOGDIR
 # OPENAI_LOGDIR=$OPENAI_LOGDIR \
 #     
-torchrun --nproc_per_node=$GPUS --master_port=23456 --nnodes=$NUM_NODES /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
+# torchrun --nproc_per_node=$GPUS --master_port=23456 --nnodes=$NUM_NODES /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
+accelerate launch /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
