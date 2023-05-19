@@ -13,11 +13,15 @@
 # DATA_DIR="/home/rbasiri/Dataset/GAN/train_foot/train/"
 
 
+HOSTNAMES=`scontrol show hostnames "$SLURM_JOB_NODELIST"`
+MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+MASTER_PORT=12802
+COUNT_NODE=`scontrol show hostnames "$SLURM_JOB_NODELIST" | wc -l`
 
 echo myuser=`whoami`
 echo COUNT_NODE=$COUNT_NODE
-echo LD_LIBRARY_PATH = $LD_LIBRARY_PATH
-echo PATH = $PATH
+# echo LD_LIBRARY_PATH = $LD_LIBRARY_PATH
+# echo PATH = $PATH
 echo which mpicc `which mpicc`
 echo HOSTNAMES = $HOSTNAMES
 echo hostname = `hostname`
