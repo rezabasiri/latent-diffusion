@@ -223,40 +223,48 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
         # progress_bar.set_description(f"Epoch {epoch}")
 
         for step, batch in enumerate(train_dataloader):
-            clean_images = batch["images"]
-            # Sample noise to add to the images
-            noise = torch.randn(clean_images.shape).to(clean_images.device)
-            bs = clean_images.shape[0]
-
-            # Sample a random timestep for each image
-            timesteps = torch.randint(
-                0, noise_scheduler.num_train_timesteps, (bs,), device=clean_images.device
-            ).long()
-
-            # Add noise to the clean images according to the noise magnitude at each timestep
-            # (this is the forward diffusion process)
-            noisy_images = noise_scheduler.add_noise(clean_images, noise, timesteps)
-
             with accelerator.accumulate(model):
-                # Predict the noise residual
+                # clean_images = batch["images"]
+                with torch.no_grad():
+                    latents = vae.encode(batch["images"]).latent_dist.sample()
+                    clean_images = latents * 0.18215
+                # Sample noise to add to the images
+                noise = torch.randn(clean_images.shape).to(clean_images.device)
+                bs = clean_images.shape[0]
+
+                # Sample a random timestep for each image
+                timesteps = torch.randint(
+                    0, noise_scheduler.num_train_timesteps, (bs,), device=clean_images.device
+                ).long()
+
+                # Add noise to the clean images according to the noise magnitude at each timestep
+                # (this is the forward diffusion process)
+                noisy_images = noise_scheduler.add_noise(clean_images, noise, timesteps)
+
+                # with accelerator.accumulate(model):
+                    # Predict the noise residual
                 noise_pred = model(noisy_images, timesteps, return_dict=False)[0]
-                loss = F.mse_loss(noise_pred, noise)
+                loss = F.mse_loss(noise_pred, noise).mean([1,2,3]).mean()
                 accelerator.backward(loss)
 
-                accelerator.clip_grad_norm_(model.parameters(), 1.0)
+                if accelerator.sync_gradients:
+                    accelerator.clip_grad_norm_(model.parameters(), 1.0)
                 if step % config.gradient_accumulation_steps == 0:
                     optimizer.step()
                     lr_scheduler.step()
                     optimizer.zero_grad()
-
-            # if global_step % 50 == 0 or len(train_dataloader) == global_step: 
-            # if len(train_dataloader) == global_step: 
-                logs2 = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0], "step": global_step}
-                accelerator.log(logs2, step=global_step) 
-            #     progress_bar.update(global_step)
-            #     progress_bar.set_postfix(**logs)
-            global_step += 1
-
+                        
+                if accelerator.sync_gradients:
+                # if global_step % 50 == 0 or len(train_dataloader) == global_step: 
+                # if len(train_dataloader) == global_step: 
+                    logs2 = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0], "step": global_step}
+                    accelerator.log(logs2, step=global_step) 
+                #     progress_bar.update(global_step)
+                #     progress_bar.set_postfix(**logs)
+                global_step += 1
+            
+        accelerator.wait_for_everyone()
+        
         # After each epoch you optionally sample some demo images with evaluate() and save the model
         if accelerator.is_main_process:
             pipeline = DDPMPipeline(unet=accelerator.unwrap_model(model), scheduler=noise_scheduler)
@@ -277,8 +285,20 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
         # progress_bar.update(epoch)
         # progress_bar.set_postfix(**logs)
 
-def main():
-    # args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+# def main():
+#     train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+# if __name__ == "__main__":
+#     main()
+
+notebook_launcher(train_loop, args, num_processes=2)
+with torch.no_grad():
+    torch.cuda.empty_cache()
+  
+print("Time Duration", f'{timeit.default_timer()-starttime:.5f}')
+
+
+
+# args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
 
 # import torch.multiprocessing as mp
 # torch.multiprocessing.spawn(train_loop, args=(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler,), nprocs=2, join=True, daemon=False, start_method='spawn')
@@ -301,9 +321,3 @@ def main():
 #     for p in processes:
 #         p.join()
         
-# notebook_launcher(train_loop, args, num_processes=2)
-    train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
-if __name__ == "__main__":
-    main()
-    
-print("Time Duration", f'{timeit.default_timer()-starttime:.5f}')
