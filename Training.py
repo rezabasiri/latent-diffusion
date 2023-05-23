@@ -21,7 +21,7 @@ from huggingface_hub import HfFolder, Repository, whoami
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
 run_version = "woundonly_on256footpretrained"
-name_tag = "multiGPU_multinode"
+name_tag = "multiGPU_singlenode"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
@@ -50,7 +50,7 @@ class TrainingConfig:
     num_epochs =900
     num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
     gradient_accumulation_steps =1
-    learning_rate = 1e-4
+    learning_rate = 1e-3
     lr_warmup_steps = 500
     save_image_epochs = 100
     save_model_epochs = 100
@@ -175,7 +175,7 @@ def evaluate(config, epoch, pipeline):
     image_grid = make_grid(images, rows=4, cols=4)
 
     # Save the images
-    test_dir = os.path.join(config.output_dir, "samples")
+    test_dir = os.path.join(config.output_dir, 'samples_{}_{}'.format(run_version, name_tag))
     os.makedirs(test_dir, exist_ok=True)
     image_grid.save(f"{test_dir}/{epoch:04d}.png")
 
