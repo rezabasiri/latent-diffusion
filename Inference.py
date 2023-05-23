@@ -43,7 +43,7 @@ tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 class TrainingConfig:
     image_size1 = 256  #the generated image resolution
     image_size2 = 256  #the generated image resolution
-    sample_batch_size = 4 #to monitor the progress
+    sample_batch_size = 16 #to monitor the progress
     layers_per_block=2
     num_epochs =10
     num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
