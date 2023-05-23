@@ -1,12 +1,12 @@
 #!/bin/sh
-#SBATCH -p gpu-v100
+#SBATCH -p gpu-a100
 #SBATCH --job-name=LD_Transfer
 #SBATCH --nodes=1
 #SBATCH --ntasks=2
 #SBATCH --cpus-per-task=12
 #SBATCH -t 1-00:00:00
 #SBATCH --mem=128G
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:1
 ## #SBATCH --gres=gpu:p100:3
 #SBATCH -o %x-%j.out
 

@@ -22,6 +22,7 @@ scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
 run_version = "woundonly_on256footpretrained"
 name_tag = "multiGPU_singlenode"
+samplefile_tag="Run2"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
@@ -43,8 +44,8 @@ shutil.copy(realpath, "./")
 class TrainingConfig:
     image_size1 = 256  #the generated image resolution
     image_size2 = 256  #the generated image resolution
-    train_batch_size = 5
-    eval_batch_size = 5 #how many images to sample during evaluation
+    train_batch_size = 10
+    eval_batch_size = 10 #how many images to sample during evaluation
     sample_batch_size = 16 #to monitor the progress
     layers_per_block=2
     num_epochs =900
@@ -53,8 +54,8 @@ class TrainingConfig:
     learning_rate = 1e-3
     lr_warmup_steps = 500
     save_image_epochs = 100
-    save_model_epochs = 100
-    mixed_precision = "no"  # `no` for float32, `fp16` for automatic mixed precision
+    save_model_epochs = 20
+    mixed_precision = "fp16"  # `no` for float32, `fp16` for automatic mixed precision
     output_dir = "./"  # the model name locally and on the HF Hub
     cache_dir = "cache"
     saved_model = "saved_model"
@@ -175,7 +176,7 @@ def evaluate(config, epoch, pipeline):
     image_grid = make_grid(images, rows=4, cols=4)
 
     # Save the images
-    test_dir = os.path.join(config.output_dir, 'samples_{}_{}'.format(run_version, name_tag))
+    test_dir = os.path.join(config.output_dir, 'samples_{}_{}'.format(run_version, samplefile_tag))
     os.makedirs(test_dir, exist_ok=True)
     image_grid.save(f"{test_dir}/{epoch:04d}.png")
 
