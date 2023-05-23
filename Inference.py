@@ -10,6 +10,7 @@ from PIL import Image
 from torchvision import transforms
 import torch.nn.functional as F
 from tqdm.auto import tqdm
+# from tqdm.autonotebook import tqdm
 from pathlib import Path
 from diffusers import UNet2DModel, DDPMScheduler, DDPMPipeline, AutoencoderKL, VQModel
 from datasets import load_dataset
@@ -22,6 +23,7 @@ scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
 run_version = "foot"
 name_tag = "inference"
+samplefile_tag="Run2"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
@@ -33,23 +35,27 @@ print('Model Saved in:', folder)
 os.makedirs(folder, exist_ok = True)
 os.chdir(folder)
 shutil.copy(realpath, "./")
+
+from functools import partialmethod
+tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 #####################################################################
 @dataclass
 class TrainingConfig:
-    image_size1 = 32  #the generated image resolution
-    image_size2 = 32  #the generated image resolution
-    sample_batch_size = 1 #to monitor the progress
+    image_size1 = 256  #the generated image resolution
+    image_size2 = 256  #the generated image resolution
+    sample_batch_size = 4 #to monitor the progress
     layers_per_block=2
-    num_epochs =2
+    num_epochs =10
     num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
     gradient_accumulation_steps =1
     learning_rate = 1e-3
     mixed_precision = "no"  # `no` for float32, `fp16` for automatic mixed precision
     output_dir = "./"  # the model name locally
-    ID = "test"
+    ID = "256"
     saved_model = "saved_model"
 
     seed = 0
+    num_inference_steps=1000
 config = TrainingConfig()
 #####################################################################
 if os.path.isdir(os.path.join(pathPreTrained, config.saved_model,"scheduler")):
@@ -102,6 +108,7 @@ def evaluate(config, epoch, pipeline):
     images = pipeline(
         batch_size=config.sample_batch_size,
         generator=torch.manual_seed(config.seed),
+        num_inference_steps=config.num_inference_steps,
     ).images
 
     # Make a grid out of the images
@@ -111,16 +118,24 @@ def evaluate(config, epoch, pipeline):
     test_dir = os.path.join(config.output_dir, config.ID)
     os.makedirs(test_dir, exist_ok=True)
     image_grid.save(f"{test_dir}/{epoch:04d}.png")
+    
+optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
 #####################################################################
 accelerator = Accelerator(
     mixed_precision=config.mixed_precision,
     gradient_accumulation_steps=config.gradient_accumulation_steps,
 )
+model, optimizer = accelerator.prepare(
+        model, optimizer
+    )
+
 if accelerator.is_main_process:
     def train_loop(config, model, noise_scheduler):
         pipeline = DDPMPipeline(unet=accelerator.unwrap_model(model), scheduler=noise_scheduler)
         for epoch in range(config.num_epochs):
+            print("Example Batch:",epoch)
             evaluate(config, epoch, pipeline)
+            config.seed += 50
 
 def main():
     train_loop(config, model, noise_scheduler)

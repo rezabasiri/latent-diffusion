@@ -54,4 +54,7 @@ echo THEID=$THEID
 # OPENAI_LOGDIR=$OPENAI_LOGDIR \
 #     
 # torchrun --nproc_per_node=$GPUS --master_port=23456 --nnodes=$NUM_NODES /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
-accelerate launch  --num_processes $(( $GRES * $COUNT_NODE )) --num_machines $COUNT_NODE --multi_gpu --mixed_precision fp16 --machine_rank $THEID --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
+## Multi_GPU
+# accelerate launch  --num_processes $(( $GRES * $COUNT_NODE )) --num_machines $COUNT_NODE --multi_gpu --mixed_precision fp16 --machine_rank $THEID --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
+## Single_GPU
+accelerate launch  --num_processes $(( $GRES * $COUNT_NODE )) --num_machines $COUNT_NODE --machine_rank $THEID --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py

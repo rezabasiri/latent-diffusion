@@ -13,5 +13,5 @@
 COUNT_NODE=`scontrol show hostnames "$SLURM_JOB_NODELIST" | wc -l`
 GRES=`scontrol show hostnames "$CUDA_VISIBLE_DEVICES" | wc -l`
 
-torchrun --nproc_per_node=$GRES --master_port=23456 --nnodes=$COUNT_NODE /home/rbasiri/MyCode/Diffusion/latent-diffusion/Inference.py
-# accelerate launch  /home/rbasiri/MyCode/Diffusion/latent-diffusion/Inference.py
+# torchrun --nproc_per_node=$GRES --master_port=23456 --nnodes=$COUNT_NODE /home/rbasiri/MyCode/Diffusion/latent-diffusion/Inference.py
+accelerate launch  /home/rbasiri/MyCode/Diffusion/latent-diffusion/Inference.py

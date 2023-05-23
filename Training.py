@@ -55,7 +55,7 @@ class TrainingConfig:
     lr_warmup_steps = 500
     save_image_epochs = 100
     save_model_epochs = 20
-    mixed_precision = "fp16"  # `no` for float32, `fp16` for automatic mixed precision
+    mixed_precision = "no"  # `no` for float32, `fp16` for automatic mixed precision
     output_dir = "./"  # the model name locally and on the HF Hub
     cache_dir = "cache"
     saved_model = "saved_model"
