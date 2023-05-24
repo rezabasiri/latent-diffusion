@@ -223,11 +223,11 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
         # progress_bar.set_description(f"Epoch {epoch}")
 
         for step, batch in enumerate(train_dataloader):
-            with accelerator.accumulate(model): # NEW
+            with accelerator.accumulate(model):
                 # clean_images = batch["images"]
                 with torch.no_grad():
-                    latents = vae.encode(batch["images"]).latent_dist.sample() # NEW
-                    clean_images = latents * 0.18215 # NEW
+                    latents = vae.encode(batch["images"]).latent_dist.sample()
+                    clean_images = latents * 0.18215
                 # Sample noise to add to the images
                 noise = torch.randn(clean_images.shape).to(clean_images.device)
                 bs = clean_images.shape[0]
@@ -244,10 +244,10 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                 # with accelerator.accumulate(model):
                     # Predict the noise residual
                 noise_pred = model(noisy_images, timesteps, return_dict=False)[0]
-                loss = F.mse_loss(noise_pred, noise).mean([1,2,3]).mean() # NEW
+                loss = F.mse_loss(noise_pred, noise).mean([1,2,3]).mean()
                 accelerator.backward(loss)
 
-                if accelerator.sync_gradients: # NEW
+                if accelerator.sync_gradients:
                     accelerator.clip_grad_norm_(model.parameters(), 1.0)
                 if step % config.gradient_accumulation_steps == 0:
                     optimizer.step()
@@ -263,7 +263,7 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                 #     progress_bar.set_postfix(**logs)
                 global_step += 1
             
-        accelerator.wait_for_everyone() # NEW
+        accelerator.wait_for_everyone()
         
         # After each epoch you optionally sample some demo images with evaluate() and save the model
         if accelerator.is_main_process:
@@ -290,8 +290,8 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
 # if __name__ == "__main__":
 #     main()
 
-notebook_launcher(train_loop, args, num_processes=2) # NEW
-with torch.no_grad(): # NEW
+notebook_launcher(train_loop, args, num_processes=2)
+with torch.no_grad():
     torch.cuda.empty_cache()
   
 print("Time Duration", f'{timeit.default_timer()-starttime:.5f}')
