@@ -1,12 +1,12 @@
 #!/bin/sh
 #SBATCH -p gpu-a100
-#SBATCH --job-name=LD_Transfer
+#SBATCH --job-name=LD_TranRun3
 #SBATCH --nodes=1
 #SBATCH --ntasks=2
 #SBATCH --cpus-per-task=12
 #SBATCH -t 1-00:00:00
 #SBATCH --mem=128G
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:2
 ## #SBATCH --gres=gpu:p100:3
 #SBATCH -o %x-%j.out
 
@@ -21,6 +21,7 @@ GRES=`scontrol show hostnames "$CUDA_VISIBLE_DEVICES" | wc -l`
 
 echo myuser=`whoami`
 echo COUNT_NODE=$COUNT_NODE
+echo COUNT_GPU=$GRES
 # echo LD_LIBRARY_PATH = $LD_LIBRARY_PATH
 # echo PATH = $PATH
 echo which mpicc `which mpicc`
@@ -54,7 +55,8 @@ echo THEID=$THEID
 # OPENAI_LOGDIR=$OPENAI_LOGDIR \
 #     
 # torchrun --nproc_per_node=$GPUS --master_port=23456 --nnodes=$NUM_NODES /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
+# torchrun /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
 ## Multi_GPU
-# accelerate launch  --num_processes $(( $GRES * $COUNT_NODE )) --num_machines $COUNT_NODE --multi_gpu --mixed_precision fp16 --machine_rank $THEID --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
+accelerate launch  --num_processes $(( $GRES * $COUNT_NODE )) --num_machines $COUNT_NODE --multi_gpu --mixed_precision fp16 --machine_rank $THEID --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
 ## Single_GPU
-accelerate launch  --num_processes $(( $GRES * $COUNT_NODE )) --num_machines $COUNT_NODE --machine_rank $THEID --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py
+# accelerate launch  --num_processes $(( $GRES * $COUNT_NODE )) --num_machines $COUNT_NODE --machine_rank $THEID --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT /home/rbasiri/MyCode/Diffusion/latent-diffusion/Training.py

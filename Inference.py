@@ -17,13 +17,15 @@ from datasets import load_dataset
 from diffusers.optimization import get_cosine_schedule_with_warmup
 from accelerate import Accelerator, notebook_launcher
 from huggingface_hub import HfFolder, Repository, whoami
+import random
+from datetime import datetime
 #####################################################################
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
 run_version = "foot"
 name_tag = "inference"
-samplefile_tag="Run2"
+samplefile_tag="Run3"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
@@ -43,18 +45,19 @@ tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 class TrainingConfig:
     image_size1 = 256  #the generated image resolution
     image_size2 = 256  #the generated image resolution
-    sample_batch_size = 16 #to monitor the progress
+    sample_batch_size = 1 #to monitor the progress
     layers_per_block=2
-    num_epochs =10
+    num_epochs =500
     num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
     gradient_accumulation_steps =1
     learning_rate = 1e-3
     mixed_precision = "no"  # `no` for float32, `fp16` for automatic mixed precision
     output_dir = "./"  # the model name locally
-    ID = "256"
+    ID = "256_run3"
     saved_model = "saved_model"
-
-    seed = 0
+    
+    seed = datetime.now().timestamp()
+    # seed = 0
     num_inference_steps=1000
 config = TrainingConfig()
 #####################################################################
@@ -112,7 +115,9 @@ def evaluate(config, epoch, pipeline):
     ).images
 
     # Make a grid out of the images
-    image_grid = make_grid(images, rows=4, cols=4)
+    
+    image_grid = make_grid(images, rows=1, cols=1)
+    # image_grid = images
 
     # Save the images
     test_dir = os.path.join(config.output_dir, config.ID)
