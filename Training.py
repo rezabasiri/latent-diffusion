@@ -9,7 +9,8 @@ import shutil
 from PIL import Image
 from torchvision import transforms
 import torch.nn.functional as F
-from tqdm.auto import tqdm
+# from tqdm.auto import tqdm
+from tqdm.autonotebook import tqdm
 from pathlib import Path
 from diffusers import UNet2DModel, DDPMScheduler, DDPMPipeline, AutoencoderKL, VQModel
 from datasets import load_dataset
@@ -20,15 +21,16 @@ from huggingface_hub import HfFolder, Repository, whoami
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "woundonly_on256footpretrained"
-name_tag = "multiGPU_singlenode"
-samplefile_tag="Run2"
+run_version = "woundonly"
+name_tag = "Model512"
+samplefile_tag="Run1"
 # tf.config.list_physical_devices('GPU')
+pathPreTrained="None"
 #####################################################################
 ## Calgary
 pathimg = '/home/rbasiri/Dataset/GAN/train_woundonly'
 folder = '/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
-pathPreTrained="/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_256_foot"
+# pathPreTrained="/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_256_foot"
 ########################
 ## Mehdy
 # pathimg = '/home/graduate1/segmentation/Dataset/GAN/train_orig'
@@ -39,21 +41,25 @@ print('Model Saved in:', folder)
 os.makedirs(folder, exist_ok = True)
 os.chdir(folder)
 shutil.copy(realpath, "./")
+
+from functools import partialmethod
+# tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 #####################################################################
 @dataclass
 class TrainingConfig:
-    image_size1 = 256  #the generated image resolution
-    image_size2 = 256  #the generated image resolution
-    train_batch_size = 10
-    eval_batch_size = 10 #how many images to sample during evaluation
+    image_size1 = 512  #the generated image resolution
+    image_size2 = 512  #the generated image resolution
+    train_batch_size = 4
+    eval_batch_size = 4 #how many images to sample during evaluation
     sample_batch_size = 16 #to monitor the progress
-    layers_per_block=2
+    layers_per_block=4
     num_epochs =900
     num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
+    num_inference_steps=1000
     gradient_accumulation_steps =1
-    learning_rate = 1e-3
+    learning_rate = 1e-4
     lr_warmup_steps = 500
-    save_image_epochs = 100
+    save_image_epochs = 20
     save_model_epochs = 20
     mixed_precision = "no"  # `no` for float32, `fp16` for automatic mixed precision
     output_dir = "./"  # the model name locally and on the HF Hub
@@ -170,6 +176,7 @@ def evaluate(config, epoch, pipeline):
     images = pipeline(
         batch_size=config.sample_batch_size,
         generator=torch.manual_seed(config.seed),
+        num_inference_steps=config.num_inference_steps,
     ).images
 
     # Make a grid out of the images
@@ -275,10 +282,20 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
         for label, value in logs.items():
             print(f'{label} {value:.4e}', end=' ')
         # progress_bar.update(epoch)
-        # progress_bar.set_postfix(**logs)
+        # progress_bar.set_postfix(**logs) 
+
+# def main():
+#     args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+#     notebook_launcher(train_loop, args, num_processes=2)
+# if __name__ == "__main__":
+#     main()
 
 def main():
-    # args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+    train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+if __name__ == "__main__":
+    main()
+    
+print("Time Duration", f'{timeit.default_timer()-starttime:.5f}')
 
 # import torch.multiprocessing as mp
 # torch.multiprocessing.spawn(train_loop, args=(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler,), nprocs=2, join=True, daemon=False, start_method='spawn')
@@ -300,10 +317,3 @@ def main():
 #         processes.append(p)
 #     for p in processes:
 #         p.join()
-        
-# notebook_launcher(train_loop, args, num_processes=2)
-    train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
-if __name__ == "__main__":
-    main()
-    
-print("Time Duration", f'{timeit.default_timer()-starttime:.5f}')

@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH -p gpu-a100
-#SBATCH --job-name=LD_TranRun3
+#SBATCH --job-name=LD_wound
 #SBATCH --nodes=1
 #SBATCH --ntasks=2
 #SBATCH --cpus-per-task=12
