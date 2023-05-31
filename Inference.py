@@ -24,8 +24,8 @@ from datetime import datetime
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
 run_version = "foot"
-name_tag = "inferencetest"
-samplefile_tag="testRun1"
+name_tag = "inference"
+samplefile_tag="256_Run4"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
@@ -45,7 +45,7 @@ tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 class TrainingConfig:
     sample_batch_size = 1 #to monitor the progress
     layers_per_block=2
-    num_epochs =10
+    num_epochs =1000
     num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
     num_inference_steps=1000
     gradient_accumulation_steps =1
@@ -113,7 +113,6 @@ if accelerator.is_main_process:
 
 def main():
     train_loop(config, model, noise_scheduler)
-    
 if __name__ == "__main__":
     main()
     

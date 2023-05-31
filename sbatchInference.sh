@@ -32,4 +32,7 @@ THEID=`echo -e $HOSTNAMES  | python3 -c "import sys;[sys.stdout.write(str(i)) fo
 echo THEID=$THEID
 
 # torchrun --nproc_per_node=$GRES --master_port=23456 --nnodes=$COUNT_NODE /home/rbasiri/MyCode/Diffusion/latent-diffusion/Inference.py
+## Multi_GPU
+# accelerate launch --multi_gpu --num_processes $(( $GRES * $COUNT_NODE )) --num_machines $COUNT_NODE --machine_rank $THEID --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT /home/rbasiri/MyCode/Diffusion/latent-diffusion/Inference.py
+## Single_GPU
 accelerate launch --num_processes $(( $GRES * $COUNT_NODE )) --num_machines $COUNT_NODE --machine_rank $THEID --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT /home/rbasiri/MyCode/Diffusion/latent-diffusion/Inference.py

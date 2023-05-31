@@ -23,14 +23,14 @@ scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
 run_version = "woundonly"
 name_tag = "Model512"
-samplefile_tag="Run1"
+samplefile_tag="Run2"
 # tf.config.list_physical_devices('GPU')
 pathPreTrained="None"
 #####################################################################
 ## Calgary
 pathimg = '/home/rbasiri/Dataset/GAN/train_woundonly'
 folder = '/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
-# pathPreTrained="/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_256_foot"
+# pathPreTrained="/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_woundonly_Model512"
 ########################
 ## Mehdy
 # pathimg = '/home/graduate1/segmentation/Dataset/GAN/train_orig'
