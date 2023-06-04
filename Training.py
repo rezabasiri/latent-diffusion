@@ -23,7 +23,7 @@ scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
 run_version = "woundonly"
 name_tag = "Model512"
-samplefile_tag="Run2"
+samplefile_tag="Run3"
 # tf.config.list_physical_devices('GPU')
 pathPreTrained="None"
 #####################################################################
