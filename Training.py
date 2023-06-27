@@ -21,14 +21,14 @@ from huggingface_hub import HfFolder, Repository, whoami
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "woundonly"
+run_version = "foot"
 name_tag = "Model512"
-samplefile_tag="Run3"
+samplefile_tag="Run1"
 # tf.config.list_physical_devices('GPU')
 pathPreTrained="None"
 #####################################################################
 ## Calgary
-pathimg = '/home/rbasiri/Dataset/GAN/train_woundonly'
+pathimg = '/home/rbasiri/Dataset/GAN/train_foot'
 folder = '/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
 # pathPreTrained="/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_woundonly_Model512"
 ########################
@@ -195,7 +195,6 @@ def get_full_repo_name(model_id: str, organization: str = None, token: str = Non
         return f"{username}/{model_id}"
     else:
         return f"{organization}/{model_id}"
-# model = DDPMPipeline.from_pretrained(os.path.join(config.output_dir, config.saved_model)).to("cuda")
 
 def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler):
     # Initialize accelerator and tensorboard logging
@@ -272,10 +271,7 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                 evaluate(config, epoch, pipeline)
 
             if (epoch + 1) % config.save_model_epochs == 0 or epoch == config.num_epochs - 1:
-                if config.push_to_hub:
-                    repo.push_to_hub(commit_message=f"Epoch {epoch}", blocking=True)
-                else:
-                    pipeline.save_pretrained(os.path.join(config.output_dir, config.saved_model))
+                pipeline.save_pretrained(os.path.join(config.output_dir, config.saved_model))
 
         logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
         print("Epoch:", epoch)

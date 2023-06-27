@@ -23,14 +23,14 @@ from datetime import datetime
 #identifier
 scriptversion = os.path.basename(__file__)
 realpath = os.path.realpath(__file__)
-run_version = "foot"
+run_version = "WoundOnly"
 name_tag = "inference"
-samplefile_tag="256_Run4"
+samplefile_tag="512_Run1"
 # tf.config.list_physical_devices('GPU')
 #####################################################################
 ## Calgary
 folder = '/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_{}_{}'.format(run_version, name_tag)
-pathPreTrained="/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_256_foot"
+pathPreTrained="/home/rbasiri/Dataset/saved_models/Diffusion/latent/StableDiffusionModel_woundonly_Model512"
 ########################
 print('Model Saved in:', folder)
 # os.umask(0)
@@ -43,8 +43,8 @@ tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 #####################################################################
 @dataclass
 class TrainingConfig:
-    sample_batch_size = 1 #to monitor the progress
-    layers_per_block=2
+    sample_batch_size = 4 #Number of images per epoch
+    layers_per_block=4
     num_epochs =1000
     num_train_timesteps=1000 #be careful dont go above 2000. 1000 is good!
     num_inference_steps=1000
@@ -85,13 +85,13 @@ def evaluate(config, epoch, pipeline):
     ).images
 
     # Make a grid out of the images
-    image_grid = make_grid(images, rows=1, cols=1)
+    image_grid = make_grid(images, rows=2, cols=2)
     # image_grid = images
 
     # Save the images
     test_dir = os.path.join(config.output_dir, samplefile_tag)
     os.makedirs(test_dir, exist_ok=True)
-    image_grid.save(f"{test_dir}/{epoch:04d}.png")
+    image_grid.save(f"{test_dir}/{samplefile_tag}_{epoch:04d}.png")
     
 optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
 #####################################################################

@@ -12,7 +12,6 @@
 
 # DATA_DIR="/home/rbasiri/Dataset/GAN/train_foot/train/"
 
-
 HOSTNAMES=`scontrol show hostnames "$SLURM_JOB_NODELIST"`
 MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 MASTER_PORT=23456
